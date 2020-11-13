@@ -22,7 +22,7 @@ export default function useStateFromObservable(_observable, format, { debounce }
 
     const isBehaviour = observable instanceof BehaviourSubject
 
-    if (!isBehaviour && !format) return
+    if (!isBehaviour && !format) return console.log('RETURNED IN SUBS')
 
     subscription.current = observable.subscribe((newValue) => {
       if (!format) return setV(newValue)

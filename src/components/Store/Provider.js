@@ -61,14 +61,14 @@ const Provider = ({ classes, children } = {}) => {
       },
       projection: {
         type: new StorableSubject('orthographic', 'store/projection/type'),
-        scale: new StorableSubject(1000, 'store/projection/scale'),
+        scale: new StorableSubject(10, 'store/projection/scale'),
         zoom: new StorableSubject(1, 'store/projection/zoom'),
       },
       world: {
         generate: new Subject(),
         //
         N: new StorableSubject(100, 'store/world/n'),
-        radius: new StorableSubject(10.0, 'store/world/radius'),
+        radius: new StorableSubject(637.1, 'store/world/radius'),
         //
         sphere: {
           jitter: new StorableSubject(0.0, 'store/world/sphere/jitter'),
@@ -144,9 +144,21 @@ const Provider = ({ classes, children } = {}) => {
 
                 console.log(country, area, avgSurfaceArea)
 
-                return `${numeral(avgSurfaceArea).format()} km²${
-                  country ? `  (${numeral(avgSurfaceArea / area).format('0.00%')} of ${country})` : ''
-                }`
+                // https://www.google.com/search?q=SLOVAK%20REPUBLIC
+                // encodeURI
+                const avgArea = `${numeral(avgSurfaceArea).format()} km²`
+
+                if (!country) return avgArea
+                return (
+                  <span>
+                    {avgArea}
+                    {` (${numeral(avgSurfaceArea / area).format('0.00%')} of `}
+                    <a rel="noreferrer" target="_blank" href={`https://www.google.com/search?q=${encodeURI(country)}`}>
+                      {country}
+                    </a>
+                    {`)`}
+                  </span>
+                )
               }}
             ></GUI.Input>
           </GUI.Folder>
@@ -158,7 +170,7 @@ const Provider = ({ classes, children } = {}) => {
               enabler={store.seeds.locked.sphere}
               disabled={allSeedsLocked}
             ></GUI.Input>
-            <GUI.Input label="N" value={store.world.N} min={4} max={10000}></GUI.Input>
+            <GUI.Input label="N" value={store.world.N} min={4} max={500000}></GUI.Input>
             <GUI.Input label="Jitter" value={store.world.sphere.jitter} max={1} step={0.01}></GUI.Input>
             <GUI.Input label="Radius" value={store.world.radius} min={1} max={1000.0} step={0.01}></GUI.Input>
           </GUI.Folder>

@@ -27,7 +27,7 @@ const Input = ({ classes, children, label, debounce, value: _value, format, enab
 
   const _disabled = disabled || !(enablerValue ?? true)
 
-  let valueType = isMonitor ? 'string' : step === undefined ? type(value) : type(step)
+  let valueType = isMonitor ? 'monitor' : step === undefined ? type(value) : type(step)
   // for "undefined" as a type, means observable is not behaviour
   //      so, input must be a button (that calls next)
 
@@ -43,8 +43,7 @@ const Input = ({ classes, children, label, debounce, value: _value, format, enab
       <div className={clsx(classes.input, { [classes.disableableInput]: !!enabler })}>
         {valueType === 'string' ? (
           <TextField
-            disabled={_disabled || isMonitor}
-            className={clsx({ [classes.monitor]: isMonitor })}
+            disabled={_disabled}
             variant="outlined"
             fullWidth
             size="small"
@@ -84,6 +83,10 @@ const Input = ({ classes, children, label, debounce, value: _value, format, enab
             control={<Checkbox checked={value} onChange={(event) => setValue(event.target.checked)} color="primary" />}
             label={value ? secondaryLabel || 'Active' : ''}
           />
+        ) : valueType === 'monitor' ? (
+          <div className={classes.monitor}>
+            <div className={classes.monitorData}>{value}</div>
+          </div>
         ) : (
           <b className={classes.label}>Variable type ({valueType}) not implemented</b>
         )}

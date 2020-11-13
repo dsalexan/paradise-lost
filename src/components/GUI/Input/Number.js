@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useRef } from 'react'
 import { Slider, TextField, withStyles } from '@material-ui/core'
 
 import numeral from '../../../lib/numeral'
@@ -24,6 +24,8 @@ const Number = ({
   fullWidth,
   ...props
 }) => {
+  const textField = useRef()
+
   const _type = useMemo(() => type || 'integer', [type])
   const _step = useMemo(() => {
     if (step !== undefined) return step
@@ -35,24 +37,31 @@ const Number = ({
   const _max = useMemo(() => max ?? Math.max(10, _step, value ?? 0), [max])
 
   const handleChange = (value) => {
-    const number = numeral(value)
+    const number = numeral(value).value()
     let cappedValue = Math.max(Math.min(number, _max), _min)
 
     if (isNaN(cappedValue)) return
     onChange && onChange(_type === 'integer' ? parseInt(cappedValue) : parseFloat(cappedValue))
+    if (textField.current) {
+      textField.current.querySelector('input').value =
+        _type === 'integer' ? parseInt(cappedValue) : parseFloat(cappedValue)
+    }
   }
 
   return (
     <div className={classes.grid}>
       <TextField
+        ref={textField}
         disabled={disabled}
         variant={variant}
         fullWidth={fullWidth}
         size={size}
         color={color}
         //
-        value={value}
-        onChange={(event) => handleChange(event.target.value)}
+        defaultValue={value}
+        // value={value}
+        // onChange={(event) => handleChange(event.target.value)}
+        onKeyDown={(event) => event.key === 'Enter' && handleChange(event.target.value.replace(',', '.'))}
       ></TextField>
       <Slider
         color={color}
@@ -73,7 +82,7 @@ const Number = ({
 export default withStyles((theme) => ({
   grid: {
     display: 'grid',
-    gridTemplateColumns: '50px auto',
+    gridTemplateColumns: '70px auto',
     gridTemplateRows: 'auto',
     columnGap: theme.spacing(2),
     alignItems: 'center',
