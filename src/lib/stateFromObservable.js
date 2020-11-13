@@ -1,30 +1,40 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { merge } from 'rxjs'
+import { get, isArray } from 'lodash'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-export default function useStateFromObservable(observable) {
+import BehaviourSubject from '../lib/rxjs/StorableSubject'
+
+export default function useStateFromObservable(_observable, format) {
+  const observable = useMemo(() => merge(_observable), [_observable])
   const subscription = useRef(null)
-  const valueRef = useRef(observable.value)
+  const [v, setV] = useState(format ? format(_observable) : get(observable, 'value'))
 
   useEffect(() => {
+    subscription.current && subscription.current.unsubscribe()
+    subscription.current = null
+
+    if (!observable) return
+
+    const isBehaviour = observable instanceof BehaviourSubject
+
+    if (!isBehaviour) return
+
     subscription.current = observable.subscribe((newValue) => {
-      console.log('SUBSCRIPTION RECEIVED NEW VALUE', newValue)
-      valueRef.current = newValue
+      if (!format) return setV(newValue)
+
+      setV(format(_observable))
     })
 
-    return () => subscription.current.unsubscribe()
+    return () => subscription.current && subscription.current.unsubscribe()
   }, [observable])
-
-  const value = useMemo(() => {
-    console.log('VALUE REF CHANGED')
-    return valueRef.current
-  }, [valueRef])
 
   const setValue = useCallback(
     (value) => {
-      console.log('SETTING NEW VALUE', value)
+      if (!observable) return
       observable.next(value)
     },
     [observable]
   )
 
-  return [value, setValue]
+  return [v, setValue]
 }

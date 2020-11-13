@@ -29,9 +29,14 @@ const Number = ({
     if (_type === 'integer') return 1
     else return 0.01
   }, [step, _type])
+  const _min = useMemo(() => min ?? 0, [min])
+  const _max = useMemo(() => max ?? Math.max(10, _step, value ?? 0), [max])
 
   const handleChange = (value) => {
-    onChange && onChange(_type === 'integer' ? parseInt(value) : parseFloat(value))
+    let cappedValue = Math.max(Math.min(value, _max), _min)
+
+    if (isNaN(cappedValue)) return
+    onChange && onChange(_type === 'integer' ? parseInt(cappedValue) : parseFloat(cappedValue))
   }
 
   return (
@@ -52,8 +57,8 @@ const Number = ({
         valueLabelDisplay="auto"
         valueLabelFormat={(x) => <b>{x}</b>}
         step={_step}
-        min={min ?? 0}
-        max={max ?? Math.max(10, _step, value ?? 0)}
+        min={_min}
+        max={_max}
         //
         value={value}
         onChange={(event, value) => handleChange(value)}

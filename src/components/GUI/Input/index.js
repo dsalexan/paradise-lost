@@ -10,12 +10,6 @@ export default withStyles((theme) => ({
     display: 'grid',
     gridTemplateColumns: '100px auto',
     gridTemplateRows: 'auto',
-
-    '& > div': {
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-    },
   },
   fullRow: {
     gridTemplateColumns: 'auto',
@@ -28,8 +22,30 @@ export default withStyles((theme) => ({
     '&.light, & .light': {
       opacity: 0.25,
     },
+
+    '&.monitor': {
+      // color: theme.palette.primary.main,
+    },
+
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
   },
-  input: {},
+  input: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  disableableInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  //
+  monitor: {
+    '& .MuiInputBase-root.Mui-disabled': {
+      color: theme.palette.primary.main,
+    },
+  },
 
   // BUTTON
   compositeButton: {

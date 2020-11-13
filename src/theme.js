@@ -93,6 +93,13 @@ const theme = createMuiTheme({
         paddingBottom: spacing,
       },
     },
+    MuiFormControlLabel: {
+      root: {
+        marginTop: -spacing / (2 * 3),
+        marginBottom: -spacing / (2 * 3),
+        marginRight: 0,
+      },
+    },
   },
   breakpoints: {
     values: {
