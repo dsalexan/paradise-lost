@@ -1,0 +1,60 @@
+{
+  "name": "wobble-transition",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@material-ui/core": "^4.11.0",
+    "@material-ui/lab": "^4.0.0-alpha.56",
+    "@react-spring/three": "^9.0.0-rc.3",
+    "@react-spring/web": "^9.0.0-rc.3",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "babel-eslint": "^10.1.0",
+    "chroma-js": "^2.1.0",
+    "clsx": "^1.1.1",
+    "d3-geo-voronoi": "^1.6.0",
+    "debug": "^4.2.0",
+    "drei": "^1.5.7",
+    "eslint-config-prettier": "^6.14.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-react": "^7.21.5",
+    "human-id": "^2.0.1",
+    "lerp": "^1.0.3",
+    "lodash": "^4.17.20",
+    "mdi-material-ui": "^6.20.0",
+    "moment": "^2.29.1",
+    "node-sass": "^4.14.1",
+    "numeral": "^2.0.6",
+    "prettier": "^2.1.2",
+    "react": "^16.13.1",
+    "react-d3-library": "^1.1.8",
+    "react-dom": "^16.13.1",
+    "react-intersection-observer": "^8.28.5",
+    "react-scripts": "3.4.3",
+    "react-spring": "^8.0.27",
+    "react-three-fiber": "^4.2.21",
+    "three": "^0.120.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
