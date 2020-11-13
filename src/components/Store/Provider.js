@@ -1,8 +1,8 @@
-import React, { useState, useCallback, Fragment, useMemo } from 'react'
+import React, { useState, useCallback, Fragment, useMemo, useEffect } from 'react'
 
 import { Button, Slider, TextField, withStyles } from '@material-ui/core'
 
-import { Subject } from 'rxjs'
+import { Subject, BehaviorSubject, merge } from 'rxjs'
 
 import useStoredState from '../../lib/storedState'
 import useStateFromObservable from '../../lib/stateFromObservable'
@@ -14,22 +14,22 @@ import uniqueName from '../../lib/unique'
 import Context from './Context'
 
 import { debounce, get } from 'lodash'
-import numeral from 'numeral'
+import numeral from '../../lib/numeral'
 import GUI from '../GUI'
 import moment from 'moment'
 
 import Cog from 'mdi-material-ui/Cog'
 import Earth from 'mdi-material-ui/Earth'
-
-numeral.register('locale', 'pt-br', {
-  delimiters: {
-    thousands: ' ',
-    decimal: '.',
-  },
-})
-numeral.locale('pt-br')
+import useSurfaceArea from '../../domain/earth/surfaceArea'
+import findClosest from '../../lib/lodash/findClosest'
 
 const Provider = ({ classes, children } = {}) => {
+  const data = {
+    countries: {
+      surfaceArea: useSurfaceArea(),
+    },
+  }
+
   const store = useMemo(() => {
     return {
       control: {
@@ -128,13 +128,26 @@ const Provider = ({ classes, children } = {}) => {
             ></GUI.Input>
             <GUI.Input
               label="Planet Surface Area"
-              value={[store.projection.scale]}
-              format={([scale]) => `1:${numeral(scale.value).format()} km`}
+              value={[store.projection.scale, store.world.radius]}
+              format={([scale, radius]) => `${numeral(4 * Math.PI * (scale.value * radius.value) ** 2).format()} km²`}
             ></GUI.Input>
             <GUI.Input
               label="Average Region Area"
-              value={[store.projection.scale]}
-              format={([scale]) => `1:${numeral(scale.value).format()} km`}
+              value={[store.projection.scale, store.world.radius, store.world.N, data.countries.surfaceArea]}
+              debounce={50}
+              format={([scale, radius, N, surfaceAreas]) => {
+                const avgSurfaceArea = (4 * Math.PI * (scale.value * radius.value) ** 2) / N.value
+
+                const [country, area] = surfaceAreas.value
+                  ? findClosest(surfaceAreas.value, avgSurfaceArea, ([n, a]) => a)
+                  : [null, avgSurfaceArea]
+
+                console.log(country, area, avgSurfaceArea)
+
+                return `${numeral(avgSurfaceArea).format()} km²${
+                  country ? `  (${numeral(avgSurfaceArea / area).format('0.00%')} of ${country})` : ''
+                }`
+              }}
             ></GUI.Input>
           </GUI.Folder>
           <GUI.Folder name="Sphere" id="world-sphere">
@@ -147,7 +160,7 @@ const Provider = ({ classes, children } = {}) => {
             ></GUI.Input>
             <GUI.Input label="N" value={store.world.N} min={4} max={10000}></GUI.Input>
             <GUI.Input label="Jitter" value={store.world.sphere.jitter} max={1} step={0.01}></GUI.Input>
-            <GUI.Input label="Radius" value={store.world.radius} max={1000.0} step={0.01}></GUI.Input>
+            <GUI.Input label="Radius" value={store.world.radius} min={1} max={1000.0} step={0.01}></GUI.Input>
           </GUI.Folder>
           <GUI.Folder name="Visibility" id="world-visibility">
             <GUI.Input label="Grid" value={store.world.visible.grid}></GUI.Input>

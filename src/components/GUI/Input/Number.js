@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react'
 import { Slider, TextField, withStyles } from '@material-ui/core'
 
+import numeral from '../../../lib/numeral'
+
 // disabled={disabled}
 // variant="outlined"
 // color="primary"
@@ -33,7 +35,8 @@ const Number = ({
   const _max = useMemo(() => max ?? Math.max(10, _step, value ?? 0), [max])
 
   const handleChange = (value) => {
-    let cappedValue = Math.max(Math.min(value, _max), _min)
+    const number = numeral(value)
+    let cappedValue = Math.max(Math.min(number, _max), _min)
 
     if (isNaN(cappedValue)) return
     onChange && onChange(_type === 'integer' ? parseInt(cappedValue) : parseFloat(cappedValue))

@@ -17,12 +17,12 @@ import { type } from '../../../lib/lodash/type'
 import { flatten, isArray } from 'lodash'
 import Number from './Number'
 
-const Input = ({ classes, children, label, value: _value, format, enabler, disabled, ...props } = {}) => {
+const Input = ({ classes, children, label, debounce, value: _value, format, enabler, disabled, ...props } = {}) => {
   const { step, min, max } = props // for NUMBER
 
   const isMonitor = useMemo(() => isArray(_value), [_value])
 
-  const [value, setValue] = useStateFromObservable(_value, format)
+  const [value, setValue] = useStateFromObservable(_value, format, { debounce })
   const [enablerValue, setEnabler] = useStateFromObservable(enabler)
 
   const _disabled = disabled || !(enablerValue ?? true)
