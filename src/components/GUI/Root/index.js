@@ -10,4 +10,8 @@ export default withStyles((theme) => ({
     width: 500,
     padding: theme.spacing(0.5, 0),
   },
+  right: {
+    right: 0,
+    left: 'auto',
+  },
 }))(Root)

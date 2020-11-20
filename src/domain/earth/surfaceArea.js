@@ -8,11 +8,15 @@ import csv from '../../lib/csv'
 import StorableSubject from '../../lib/rxjs/StorableSubject'
 
 async function surface_area() {
+  console.time('fetching')
   const file = await axios.get('/countries_surface_area.csv')
+  console.timeEnd('fetching')
 
+  console.time('reading')
   const array = csv(file.data, ',')
+  console.timeEnd('reading')
   const [header, ...rows] = array.slice(4)
-
+  console.time('parsing')
   const columns = header
     .map((name, index) => [name, index])
     .filter(([name]) => ['Country Name', '2018'].includes(name))
@@ -25,9 +29,10 @@ async function surface_area() {
       return newRow
     })
     .filter(([name, area]) => !isEmpty(name) && !isNaN(area))
-
+  console.timeEnd('parsing')
+  console.time('sorting')
   const sortedSubset = sortBy(subset, ([name, area]) => area)
-
+  console.timeEnd('sorting')
   return sortedSubset
 }
 

@@ -15,6 +15,7 @@ export default withStyles((theme) => ({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
+    flexShrink: 0,
   },
   thumbnail: {},
   label: {

@@ -23,35 +23,41 @@ const Pane = ({ classes, id, name, icon, placement, children, ...props }) => {
 
   return (
     <div className={classes.pane}>
-      <div className={classes.tab}>
-        <IconButton className={classes.thumbnail} onClick={() => setOpen(!open)} color={open ? 'primary' : 'default'}>
-          <SvgIcon>{icon}</SvgIcon>
-        </IconButton>
-        <div className={clsx(classes.label, { light: !open })}>{name}</div>
-        {/* {open && (
-          <div className={classes.drawer}>
-            <Tooltip title="Collapse All Folders" placement={counterPlacement}>
-              <IconButton className={classes.iconButton} onClick={collapseAllFolders} size="small">
-                <SvgIcon className={classes.icon}>
-                  <CollapseAll></CollapseAll>
-                </SvgIcon>
-              </IconButton>
-            </Tooltip>
+      {placement === 'right' ? (
+        <>
+          <Collapse style={{ flexGrow: 1 }} in={open}>
+            {children}
+          </Collapse>
 
-            <Tooltip title="Expand All Folders" placement={counterPlacement}>
-              <IconButton className={classes.iconButton} onClick={expandAllFolders} size="small">
-                <SvgIcon className={classes.icon}>
-                  <ExpandAll></ExpandAll>
-                </SvgIcon>
-              </IconButton>
-            </Tooltip>
+          <div className={classes.tab}>
+            <IconButton
+              className={classes.thumbnail}
+              onClick={() => setOpen(!open)}
+              color={open ? 'primary' : 'default'}
+            >
+              <SvgIcon>{icon}</SvgIcon>
+            </IconButton>
+            <div className={clsx(classes.label, { light: !open })}>{name}</div>
           </div>
-        )} */}
-      </div>
+        </>
+      ) : (
+        <>
+          <div className={classes.tab}>
+            <IconButton
+              className={classes.thumbnail}
+              onClick={() => setOpen(!open)}
+              color={open ? 'primary' : 'default'}
+            >
+              <SvgIcon>{icon}</SvgIcon>
+            </IconButton>
+            <div className={clsx(classes.label, { light: !open })}>{name}</div>
+          </div>
 
-      <Collapse style={{ flexGrow: 1 }} in={open}>
-        {children}
-      </Collapse>
+          <Collapse style={{ flexGrow: 1 }} in={open}>
+            {children}
+          </Collapse>
+        </>
+      )}
     </div>
   )
 }

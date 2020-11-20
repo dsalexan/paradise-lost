@@ -36,6 +36,16 @@ export default withStyles((theme) => ({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  denseFormControl: {
+    '& .MuiOutlinedInput-input': {
+      padding: theme.spacing(1, 1.5),
+      paddingTop: theme.spacing(1),
+      paddingBottom: theme.spacing(1),
+    },
+    '& .MuiSelect-icon': {
+      top: 'auto',
+    },
+  },
   //
   monitor: {
     borderRadius: 4,
