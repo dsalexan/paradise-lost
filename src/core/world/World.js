@@ -8,6 +8,10 @@ import Sphere from './Sphere'
 import { geoVoronoi } from '../../lib/d3-geo-voronoi'
 import { get } from 'lodash'
 
+function PERFORMANCE() {
+  return JSON.parse(window.localStorage.getItem('store/control/performance'))
+}
+
 class World {
   constructor(N, radius, { jitter, seed, visibility, projector } = {}) {
     // BASE SPHERE
@@ -20,7 +24,8 @@ class World {
 
     this.enabled = true
 
-    this._vertices = new BehaviorSubject(null)
+    this._spherical = new BehaviorSubject(null)
+    this._cartesian = new BehaviorSubject(null)
     this._tesselation = new BehaviorSubject(null)
 
     // render
@@ -30,32 +35,46 @@ class World {
     this.renderer = new Renderer(this, projector)
   }
 
-  get vertices() {
-    return this._vertices.value
+  get spherical() {
+    return this._spherical.value
+  }
+  get cartesian() {
+    return this._cartesian.value
   }
 
   get tesselation() {
     return this._tesselation.value
   }
 
+  clear() {
+    this._vertices.next(null)
+    this._tesselation.next(null)
+    console.log('CLEAR WORLD')
+  }
+
   buildSphere(force = false) {
     if (!this.enabled && !force) return
 
-    console.time('World/buildSphere')
-    this._vertices.next(Sphere.fibonacci(this.N.value, this.jitter.value, this.seed.value)) // generate base sphere
-    console.timeEnd('World/buildSphere')
+    PERFORMANCE() && console.time('World/buildSphere') // COMMENT
+
+    const { cartesian, spherical } = Sphere.fibonacci(this.N.value, this.jitter.value, this.seed.value)
+    this._spherical.next(spherical)
+    this._cartesian.next(cartesian)
+    // cartesian.then((_cartesian) => this._cartesian.next(_cartesian)) // this._cartesian.next(cartesian)
+
+    PERFORMANCE() && console.timeEnd('World/buildSphere') // COMMENT
   }
 
   buildTesselation(force = false) {
     if (!this.enabled && !force) return
 
-    console.time('World/buildTesselation')
-    const sphericalVerticesInDegree = this.vertices.spherical.map(({ r, ϕ, θ }) => [
+    PERFORMANCE() && console.time('World/buildTesselation') // COMMENT
+    const sphericalVerticesInDegree = this.spherical.map(({ r, ϕ, θ }) => [
       (θ * 180) / Math.PI,
       ϕ * (180 / Math.PI) - 90,
     ])
     this._tesselation.next(geoVoronoi()(sphericalVerticesInDegree))
-    console.timeEnd('World/buildTesselation')
+    PERFORMANCE() && console.timeEnd('World/buildTesselation') // COMMENT
   }
 
   build(force = false) {

@@ -21,7 +21,12 @@ import {
 import { cloneDeep } from 'lodash'
 
 import * as Comlink from 'comlink'
-import MyWorker from './worker'
+const worker = new Worker('./worker', { name: 'worker', type: 'module' })
+const delaunayWorker = Comlink.wrap(worker)
+
+function PERFORMANCE() {
+  return false && JSON.parse(window.localStorage.getItem('store/control/performance'))
+}
 
 // Converts 3D Cartesian to spherical coordinates (degrees).
 function spherical(cartesian) {
@@ -45,38 +50,38 @@ export function excess(triangle) {
 export function geoDelaunay(points) {
   const DEBUG = false
 
-  DEBUG && console.time('     geo_delaunay_from') // COMMENT
+  PERFORMANCE() && console.time('     geoDelaunay/geo_delaunay_from') // COMMENT
   const delaunay = geo_delaunay_from(points)
-  DEBUG && console.timeEnd('     geo_delaunay_from') // COMMENT
-  DEBUG && console.time('     geo_triangles') // COMMENT
+  PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_delaunay_from') // COMMENT
+  PERFORMANCE() && console.time('     geoDelaunay/geo_triangles') // COMMENT
   const triangles = geo_triangles(delaunay)
-  DEBUG && console.timeEnd('     geo_triangles') // COMMENT
-  DEBUG && console.time('     geo_edges') // COMMENT
+  PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_triangles') // COMMENT
+  PERFORMANCE() && console.time('     geoDelaunay/geo_edges') // COMMENT
   const edges = null //geo_edges(triangles, points)
-  DEBUG && console.timeEnd('     geo_edges') // COMMENT
-  DEBUG && console.time('     geo_neighbors') // COMMENT
+  PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_edges') // COMMENT
+  PERFORMANCE() && console.time('     geoDelaunay/geo_neighbors') // COMMENT
   const neighbors = null // geo_neighbors(triangles, points.length)
-  DEBUG && console.timeEnd('     geo_neighbors') // COMMENT
-  DEBUG && console.time('     geo_find') // COMMENT
+  PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_neighbors') // COMMENT
+  PERFORMANCE() && console.time('     geoDelaunay/geo_find') // COMMENT
   const find = null // geo_find(neighbors, points)
-  DEBUG && console.timeEnd('     geo_find') // COMMENT
+  PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_find') // COMMENT
   // Voronoi ; could take a center function as an argument
-  DEBUG && console.time('     geo_circumcenters') // COMMENT
+  PERFORMANCE() && console.time('     geoDelaunay/geo_circumcenters') // COMMENT
   const circumcenters = geo_circumcenters(triangles, points)
-  DEBUG && console.timeEnd('     geo_circumcenters') // COMMENT
-  DEBUG && console.time('     geo_polygons') // COMMENT
+  PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_circumcenters') // COMMENT
+  PERFORMANCE() && console.time('     geoDelaunay/geo_polygons') // COMMENT
   const { polygons, centers } = geo_polygons(circumcenters, triangles, points)
-  DEBUG && console.timeEnd('     geo_polygons') // COMMENT
-  DEBUG && console.time('     geo_mesh') // COMMENT
+  PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_polygons') // COMMENT
+  PERFORMANCE() && console.time('     geoDelaunay/geo_mesh') // COMMENT
   const mesh = geo_mesh(polygons)
-  DEBUG && console.timeEnd('     geo_mesh') // COMMENT
-  DEBUG && console.time('     geo_hull') // COMMENT
+  PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_mesh') // COMMENT
+  PERFORMANCE() && console.time('     geoDelaunay/geo_hull') // COMMENT
   const hull = null // geo_hull(triangles, points)
-  DEBUG && console.timeEnd('     geo_hull') // COMMENT
+  PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_hull') // COMMENT
   // Urquhart ; returns a function that takes a distance array as argument.
-  DEBUG && console.time('     geo_urquhart') // COMMENT
+  PERFORMANCE() && console.time('     geoDelaunay/geo_urquhart') // COMMENT
   const urquhart = null // geo_urquhart(edges, triangles)
-  DEBUG && console.timeEnd('     geo_urquhart') // COMMENT
+  PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_urquhart') // COMMENT
   return {
     delaunay,
     edges,
@@ -127,19 +132,24 @@ function geo_find(neighbors, points) {
 function geo_delaunay_from(points) {
   if (points.length < 2) return {}
 
+  PERFORMANCE() && console.time('          geo_delaunay_from/point to send to infinity') // COMMENT
   // find a valid point to send to infinity
   let pivot = 0
   while (isNaN(points[pivot][0] + points[pivot][1]) && pivot++ < points.length) {
     continue
   }
+  PERFORMANCE() && console.timeEnd('          geo_delaunay_from/point to send to infinity') // COMMENT
 
+  PERFORMANCE() && console.time('          geo_delaunay_from/stereographic projection') // COMMENT
   const r = geoRotation(points[pivot]),
     projection = geoStereographic()
       .translate([0, 0])
       .scale(1)
       .rotate(r.invert([180, 0]))
   points = points.map(projection)
+  PERFORMANCE() && console.timeEnd('          geo_delaunay_from/stereographic projection') // COMMENT
 
+  PERFORMANCE() && console.time('          geo_delaunay_from/zeros') // COMMENT
   const zeros = []
   let max2 = 1
   for (let i = 0, n = points.length; i < n; i++) {
@@ -151,16 +161,20 @@ function geo_delaunay_from(points) {
   const FAR = 1e6 * sqrt(max2)
 
   zeros.forEach((i) => (points[i] = [FAR, 0]))
+  PERFORMANCE() && console.timeEnd('          geo_delaunay_from/zeros') // COMMENT
 
   // Add infinite horizon points
   points.push([0, FAR])
   points.push([-FAR, 0])
   points.push([0, -FAR])
 
+  PERFORMANCE() && console.time('          geo_delaunay_from/delaunator') // COMMENT
   const delaunay = Delaunay.from(points)
 
   delaunay.projection = projection
+  PERFORMANCE() && console.timeEnd('          geo_delaunay_from/delaunator') // COMMENT
 
+  PERFORMANCE() && console.time('          geo_delaunay_from/clean up the triangulation') // COMMENT
   // clean up the triangulation
   const { triangles, halfedges, inedges } = delaunay
   const degenerate = []
@@ -182,6 +196,7 @@ function geo_delaunay_from(points) {
       triangles[i] = pivot
     }
   }
+  PERFORMANCE() && console.timeEnd('          geo_delaunay_from/clean up the triangulation') // COMMENT
 
   // there should always be 4 degenerate triangles
   // console.warn(degenerate);
@@ -231,11 +246,11 @@ function geo_circumcenters(triangles, points) {
   return a
 
   // if (!use_centroids) {
-  return triangles.map((tri) => {
-    const c = tri.map((i) => points[i]).map(cartesian),
-      V = cartesianAdd(cartesianAdd(cross(c[1], c[0]), cross(c[2], c[1])), cross(c[0], c[2]))
-    return spherical(normalize(V))
-  })
+  // return triangles.map((tri) => {
+  //   const c = tri.map((i) => points[i]).map(cartesian),
+  //     V = cartesianAdd(cartesianAdd(cross(c[1], c[0]), cross(c[2], c[1])), cross(c[0], c[2]))
+  //   return spherical(normalize(V))
+  // })
   /*} else {
     return triangles.map(tri => {
       return d3.geoCentroid({
@@ -270,21 +285,19 @@ function geo_neighbors(triangles, npoints) {
 }
 
 function geo_polygons(circumcenters, triangles, points) {
-  const worker = new Worker()
-  const obj = Comlink.wrap(worker)
-  obj.calc().then((event) => console.log('Worker done:', event))
-
-  Worker.postMessage({ data: 'sent' })
-  Worker.onmessage = (event) => console.log('Worker:onmessage', event)
-
+  PERFORMANCE() && console.time('          geo_polygons/base fill polygons array') // COMMENT
   const polygons = []
+  for (let i = 0; i < points.length; i++) {
+    polygons[i] = []
+  }
+  PERFORMANCE() && console.timeEnd('          geo_polygons/base fill polygons array') // COMMENT
 
   const centers = circumcenters.slice()
 
   // supplementary centers for degenerate cases like n = 1,2,3
   const supplements = []
 
-  console.time('          triangles.length === 0')
+  PERFORMANCE() && console.time('          geo_polygons/triangles.length === 0') // COMMENT
   if (triangles.length === 0) {
     if (points.length < 2) return { polygons, centers }
     if (points.length === 2) {
@@ -300,42 +313,48 @@ function geo_polygons(circumcenters, triangles, points) {
       return polygons.push(poly), polygons.push(poly.slice().reverse()), { polygons, centers }
     }
   }
-  console.timeEnd('          triangles.length === 0')
+  PERFORMANCE() && console.timeEnd('          geo_polygons/triangles.length === 0') // COMMENT
 
-  console.time('          triangles.forEach((tri, t)')
+  PERFORMANCE() && console.time(`          geo_polygons/t < triangles.length (${triangles.length})`) // COMMENT
   for (let t = 0; t < triangles.length; t++) {
-    const tri = triangles[t]
+    // NOTE: the internal loops goes kaduddle to improve performance (a lot btw)
+    // for (let j = 0; j < 3; j++) {
+    //
 
-    console.time('               for each side of triangles')
-    for (let j = 0; j < 3; j++) {
-      // console.time('                    set variables')
-      const a = tri[j],
-        b = tri[(j + 1) % 3],
-        c = tri[(j + 2) % 3]
-      // console.timeEnd('                    set variables')
-      // console.time('                    dynamic set of array?')
-      polygons[a] = polygons[a] || []
-      // console.timeEnd('                    dynamic set of array?')
-      // console.time('                    push to polygons')
-      polygons[a].push([b, c, t, [a, b, c]])
-      // console.timeEnd('                    push to polygons')
-    }
-    console.timeEnd('               for each side of triangles')
+    let j = 0
+    let a = triangles[t][j],
+      b = triangles[t][(j + 1) % 3],
+      c = triangles[t][(j + 2) % 3]
+
+    polygons[a].push([b, c, t])
+
+    j = 1
+    a = triangles[t][j]
+    b = triangles[t][(j + 1) % 3]
+    c = triangles[t][(j + 2) % 3]
+
+    polygons[a].push([b, c, t])
+
+    j = 2
+    a = triangles[t][j]
+    b = triangles[t][(j + 1) % 3]
+    c = triangles[t][(j + 2) % 3]
+
+    polygons[a].push([b, c, t])
+
+    //
+    // }
   }
-  // triangles.forEach((tri, t) => {
-  //   for (let j = 0; j < 3; j++) {
-  //     const a = tri[j],
-  //       b = tri[(j + 1) % 3],
-  //       c = tri[(j + 2) % 3]
-  //     polygons[a] = polygons[a] || []
-  //     polygons[a].push([b, c, t, [a, b, c]])
-  //   }
-  // })
-  console.timeEnd('          triangles.forEach((tri, t)')
+  PERFORMANCE() && console.timeEnd(`          geo_polygons/t < triangles.length (${triangles.length})`) // COMMENT
 
-  console.time('          reordered')
+  PERFORMANCE() && console.time('          geo_polygons/reorder') // COMMENT
   // reorder each polygon
-  const reordered = polygons.map((poly) => {
+  const reordered = polygons.map((poly, a) => {
+    // poly indexes
+    //    0 3 0 == a
+    //    0 3 1 == 0 0
+    //    0 3 2 == 0 1
+
     const p = [poly[0][2]] // t
     let k = poly[0][1] // k = c
     for (let i = 1; i < poly.length; i++) {
@@ -352,14 +371,14 @@ function geo_polygons(circumcenters, triangles, points) {
     if (p.length > 2) {
       return p
     } else if (p.length == 2) {
-      const R0 = o_midpoint(points[poly[0][3][0]], points[poly[0][3][1]], centers[p[0]]),
-        R1 = o_midpoint(points[poly[0][3][2]], points[poly[0][3][0]], centers[p[0]])
+      const R0 = o_midpoint(points[a], points[poly[0][0]], centers[p[0]]),
+        R1 = o_midpoint(points[poly[0][1]], points[a], centers[p[0]])
       const i0 = supplement(R0),
         i1 = supplement(R1)
       return [p[0], i1, p[1], i0]
     }
   })
-  console.timeEnd('          reordered')
+  PERFORMANCE() && console.timeEnd('          geo_polygons/reorder') // COMMENT
 
   function supplement(point) {
     let f = -1

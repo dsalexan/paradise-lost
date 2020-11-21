@@ -1,6 +1,6 @@
 /* global W, ENGINE */
 import { get, last } from 'lodash'
-import React, { useRef, useEffect, useState, Suspense, useMemo } from 'react'
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import { useStore } from '../../components/Store'
 
 import { merge, interval } from 'rxjs'
@@ -74,6 +74,8 @@ export default () => {
 
       W.load(data.world) // TODO: world load
     })
+
+    control.newTab.subscribe(() => window.open('http://localhost:3000', '_blank'))
 
     // SEEDS
     seeds.regenerate.subscribe((path) => {
