@@ -11,8 +11,8 @@ import { geoCentroid, geoDistance } from 'd3-geo'
 import { geoDelaunay, excess } from './delaunay.js'
 import { tau } from './math.js'
 
-export function geoVoronoi(data) {
-  const v = function (data) {
+export function geoVoronoi(data, opts = {}) {
+  const v = function (data, opts = {}) {
     v.delaunay = null
     v._data = data
 
@@ -23,7 +23,7 @@ export function geoVoronoi(data) {
       const temp = v._data.map((d) => [v._vx(d), v._vy(d), d]).filter((d) => isFinite(d[0] + d[1]))
       v.points = temp.map((d) => [d[0], d[1]])
       v.valid = temp.map((d) => d[2])
-      v.delaunay = geoDelaunay(v.points)
+      v.delaunay = geoDelaunay(v.points, opts)
     }
     return v
   }

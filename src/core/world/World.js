@@ -13,12 +13,14 @@ function PERFORMANCE() {
 }
 
 class World {
-  constructor(N, radius, { jitter, seed, visibility, projector } = {}) {
+  constructor(N, radius, { jitter, tesselation = {}, seed, visibility, projector } = {}) {
     // BASE SPHERE
     this.N = N
     this.radius = radius
 
     this.jitter = jitter
+    this.centerMethod = tesselation.center
+
     this.seed = seed
     this.visibility = visibility
 
@@ -73,7 +75,7 @@ class World {
       (θ * 180) / Math.PI,
       ϕ * (180 / Math.PI) - 90,
     ])
-    this._tesselation.next(geoVoronoi()(sphericalVerticesInDegree))
+    this._tesselation.next(geoVoronoi()(sphericalVerticesInDegree, { center: this.centerMethod.value }))
     PERFORMANCE() && console.timeEnd('World/buildTesselation') // COMMENT
   }
 

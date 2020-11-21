@@ -47,9 +47,7 @@ export function excess(triangle) {
   return dot(triangle[0], cross(triangle[2], triangle[1]))
 }
 
-export function geoDelaunay(points) {
-  const DEBUG = false
-
+export function geoDelaunay(points, { center } = {}) {
   PERFORMANCE() && console.time('     geoDelaunay/geo_delaunay_from') // COMMENT
   const delaunay = geo_delaunay_from(points)
   PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_delaunay_from') // COMMENT
@@ -66,9 +64,9 @@ export function geoDelaunay(points) {
   const find = null // geo_find(neighbors, points)
   PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_find') // COMMENT
   // Voronoi ; could take a center function as an argument
-  PERFORMANCE() && console.time('     geoDelaunay/geo_circumcenters') // COMMENT
-  const circumcenters = geo_circumcenters(triangles, points)
-  PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_circumcenters') // COMMENT
+  PERFORMANCE() && console.time(`     geoDelaunay/geo_circumcenters (${center})`) // COMMENT
+  const circumcenters = geo_circumcenters(triangles, points, { center })
+  PERFORMANCE() && console.timeEnd(`     geoDelaunay/geo_circumcenters (${center})`) // COMMENT
   PERFORMANCE() && console.time('     geoDelaunay/geo_polygons') // COMMENT
   const { polygons, centers } = geo_polygons(circumcenters, triangles, points)
   PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_polygons') // COMMENT
@@ -233,32 +231,32 @@ function geo_triangles(delaunay) {
   return geo_triangles
 }
 
-function geo_circumcenters(triangles, points) {
+function geo_circumcenters(triangles, points, { center = 'Centroids' } = {}) {
   const a = []
-  for (let i = 0; i < triangles.length; i++) {
-    const t = triangles[i]
-    const c = []
-    for (let j = 0; j < t.length; j++) {
-      c.push(points[j])
-    }
-    a.push([(c[0][0] + c[1][0] + c[2][0]) / 3, (c[0][1] + c[1][1] + c[2][1]) / 3])
-  }
-  return a
 
-  // if (!use_centroids) {
-  // return triangles.map((tri) => {
-  //   const c = tri.map((i) => points[i]).map(cartesian),
-  //     V = cartesianAdd(cartesianAdd(cross(c[1], c[0]), cross(c[2], c[1])), cross(c[0], c[2]))
-  //   return spherical(normalize(V))
-  // })
-  /*} else {
-    return triangles.map(tri => {
-      return d3.geoCentroid({
-        type: "MultiPoint",
-        coordinates: tri.map(i => points[i])
-      });
-    });
-  }*/
+  for (let t = 0; t < triangles.length; t++) {
+    const tri = triangles[t]
+    const verticesInDegree = tri.map((i) => points[i])
+    const c = verticesInDegree.map(cartesian)
+
+    // // CENTROIDS
+    if (center === 'Centroids') {
+      a.push(
+        spherical([
+          //
+          (c[0][0] + c[1][0] + c[2][0]) / 3,
+          (c[0][1] + c[1][1] + c[2][1]) / 3,
+          (c[0][2] + c[1][2] + c[2][2]) / 3,
+        ])
+      )
+    } else {
+      // // CIRCUMCENTERS
+      const V = cartesianAdd(cartesianAdd(cross(c[1], c[0]), cross(c[2], c[1])), cross(c[0], c[2]))
+      a.push(spherical(normalize(V)))
+    }
+  }
+
+  return a
 }
 
 function geo_neighbors(triangles, npoints) {

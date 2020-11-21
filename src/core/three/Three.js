@@ -69,26 +69,42 @@ class Three {
     // grid._name = 'grid'
     // this.scene.add(grid)
 
+    this.initAxes()
+    this.initGrid()
+  }
+
+  initAxes() {
     // The X axis is red. The Y axis is green. The Z axis is blue.
-    const axesHelper = new THREE.AxesHelper(10)
-    this.scene.add(axesHelper)
+    const { radius } = this.observables
 
-    var radius = 10
-    var latSegments = 18 // 10° increments
-    var longSegments = 36 // 10° increments
+    this.scene.remove(this.axesHelper)
+    this.axesHelper = new THREE.AxesHelper(radius.value * 2)
+    this.scene.add(this.axesHelper)
+  }
 
-    var geometry = new THREE.SphereBufferGeometry(radius, longSegments, latSegments)
-    var material = new THREE.MeshBasicMaterial({
-      color: 0x888888,
-      wireframe: true,
-    })
+  initGrid() {
+    const { projection, radius } = this.observables
 
-    var sphere = new THREE.Mesh(geometry, material)
-    this.scene.add(sphere)
+    this.scene.remove(this.grid)
+
+    if (projection.value === 'Orthographic') {
+      var latSegments = 18 // 10° increments
+      var longSegments = 36 // 10° increments
+
+      var geometry = new THREE.SphereBufferGeometry(radius.value * 1.0085, longSegments, latSegments)
+      var material = new THREE.MeshBasicMaterial({
+        color: 0x888888,
+        wireframe: true,
+      })
+
+      var sphere = new THREE.Mesh(geometry, material)
+      this.grid = sphere
+    }
+    this.scene.add(this.grid)
   }
 
   subscribe() {
-    const { fog, background, stats } = this.observables
+    const { radius, projection, fog, background, stats } = this.observables
 
     // merge([fog.color, fog.near, fog.far])
     //   .pipe(debounce(() => interval(50)))
@@ -97,6 +113,9 @@ class Three {
     //   })
 
     background.subscribe((bg) => (this.scene.background = new THREE.Color(bg)))
+
+    radius.subscribe(() => this.initAxes())
+    merge(projection, radius).subscribe(() => this.initGrid())
   }
 }
 

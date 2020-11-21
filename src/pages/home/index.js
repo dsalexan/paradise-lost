@@ -31,6 +31,7 @@ export default () => {
 
     const _W = new World(world.N, world.radius, {
       jitter: world.sphere.jitter,
+      tesselation: world.tesselation,
       seed: seeds.sphere,
       visibility: world.visible,
       projector,
@@ -157,7 +158,7 @@ export default () => {
   // SUBSCRIBE TO KNOBS CHANGES
   useEffect(() => {
     // generate WORLD on N/jitter change
-    merge(world.N, world.sphere.jitter)
+    merge(world.N, world.sphere.jitter, world.tesselation.center)
       .pipe(debounce(() => interval(50)))
       .subscribe(() => {
         world.generate.next()
@@ -175,7 +176,7 @@ export default () => {
 
   // INITIALIZE ENGINE
   useEffect(() => {
-    const engine = new Three(three)
+    const engine = new Three({ radius: world.radius, projection: projection.type, ...three })
     window.ENGINE = engine
     ENGINE.init()
     animate()

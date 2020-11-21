@@ -92,10 +92,14 @@ const Provider = ({ classes, children } = {}) => {
         sphere: {
           jitter: new StorableSubject(0.0, 'store/world/sphere/jitter'),
         },
+        tesselation: {
+          center: new StorableSubject('Centroids', 'store/world/tesselation/center'),
+        },
         visible: {
           grid: new StorableSubject(true, 'store/world/visible/grid'),
           cloud: new StorableSubject(true, 'store/world/visible/cloud'),
           triangles: new StorableSubject(true, 'store/world/visible/triangles'),
+          centers: new StorableSubject(true, 'store/world/visible/centers'),
           regions: new StorableSubject(true, 'store/world/visible/regions'),
         },
       },
@@ -343,12 +347,18 @@ const Provider = ({ classes, children } = {}) => {
             <GUI.Input label="N" value={store.world.N} min={4} max={500000}></GUI.Input>
             <GUI.Input label="Jitter" value={store.world.sphere.jitter} max={1} step={0.01}></GUI.Input>
             <GUI.Input label="Radius" value={store.world.radius} min={1} max={1000.0} step={0.01}></GUI.Input>
+            <GUI.Input
+              label="Center Method"
+              value={store.world.tesselation.center}
+              options={['Centroids', 'Circumcenters']}
+            ></GUI.Input>
           </GUI.Folder>
           <GUI.Folder name="Visibility" id="world-visibility">
             <GUI.Input label="Grid" value={store.world.visible.grid}></GUI.Input>
             <GUI.Input label="Cloud" value={store.world.visible.cloud}></GUI.Input>
             <GUI.Input label="Triangulation" value={store.world.visible.triangles}></GUI.Input>
-            <GUI.Input label="Tesselation" value={store.world.visible.regions}></GUI.Input>
+            <GUI.Input label="Tesselation (Regions)" value={store.world.visible.regions}></GUI.Input>
+            <GUI.Input label="Tesselation (Centers)" value={store.world.visible.centers}></GUI.Input>
           </GUI.Folder>
         </GUI.Pane>
       </GUI.Root>
