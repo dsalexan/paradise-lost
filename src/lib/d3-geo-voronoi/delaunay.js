@@ -71,7 +71,7 @@ export function geoDelaunay(points, { center } = {}) {
   const { polygons, centers } = geo_polygons(circumcenters, triangles, points)
   PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_polygons') // COMMENT
   PERFORMANCE() && console.time('     geoDelaunay/geo_mesh') // COMMENT
-  const mesh = geo_mesh(polygons)
+  const mesh = null // geo_mesh(polygons)
   PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_mesh') // COMMENT
   PERFORMANCE() && console.time('     geoDelaunay/geo_hull') // COMMENT
   const hull = null // geo_hull(triangles, points)
@@ -139,12 +139,14 @@ function geo_delaunay_from(points) {
   PERFORMANCE() && console.timeEnd('          geo_delaunay_from/point to send to infinity') // COMMENT
 
   PERFORMANCE() && console.time('          geo_delaunay_from/stereographic projection') // COMMENT
+
   const r = geoRotation(points[pivot]),
     projection = geoStereographic()
       .translate([0, 0])
       .scale(1)
       .rotate(r.invert([180, 0]))
   points = points.map(projection)
+
   PERFORMANCE() && console.timeEnd('          geo_delaunay_from/stereographic projection') // COMMENT
 
   PERFORMANCE() && console.time('          geo_delaunay_from/zeros') // COMMENT

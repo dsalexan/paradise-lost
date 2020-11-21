@@ -72,6 +72,7 @@ const Provider = ({ classes, children } = {}) => {
         center: new Subject(),
       },
       three: {
+        grid: new StorableSubject(true, 'store/three/grid'),
         removeOnHide: new StorableSubject(false, 'store/three/removeOnHide'),
         fog: {
           color: new StorableSubject(0x222222, 'store/three/fog/color'),
@@ -80,7 +81,12 @@ const Provider = ({ classes, children } = {}) => {
         },
         background: new StorableSubject(0x222222, 'store/three/background'),
         camera: {
-          // thirdFar: // TODO: thirdFar é um terço da distanca far da camera, normalmente vai ser igual ao radius do planet
+          fov: new StorableSubject(1500, 'store/three/camera/fov'),
+          near: new StorableSubject(0.5, 'store/three/camera/near'),
+          far: new StorableSubject(30000, 'store/three/camera/far'),
+          positionX: new StorableSubject(0, 'store/three/camera/positionX'),
+          positionY: new StorableSubject(1000, 'store/three/camera/positionY'),
+          positionZ: new StorableSubject(0, 'store/three/camera/positionZ'),
         },
       },
       world: {
@@ -96,7 +102,6 @@ const Provider = ({ classes, children } = {}) => {
           center: new StorableSubject('Centroids', 'store/world/tesselation/center'),
         },
         visible: {
-          grid: new StorableSubject(true, 'store/world/visible/grid'),
           cloud: new StorableSubject(true, 'store/world/visible/cloud'),
           triangles: new StorableSubject(true, 'store/world/visible/triangles'),
           centers: new StorableSubject(true, 'store/world/visible/centers'),
@@ -287,6 +292,36 @@ const Provider = ({ classes, children } = {}) => {
             <GUI.Input label="Fog (Near)" value={store.three.fog.near} min={10} max={3000} step={1}></GUI.Input>
             <GUI.Input label="Fog (Far)" value={store.three.fog.far} min={10} max={3000} step={1}></GUI.Input>
             <GUI.Input label="Background" value={store.three.background}></GUI.Input>
+            <GUI.Input label="Camera (FOV)" value={store.three.camera.fov} min={1} max={2000} step={0.1}></GUI.Input>
+            <GUI.Input
+              label="Camera (near)"
+              value={store.three.camera.near}
+              min={0.001}
+              max={1000}
+              step={0.001}
+            ></GUI.Input>
+            <GUI.Input label="Camera (far)" value={store.three.camera.far} min={100} max={5000} step={0.1}></GUI.Input>
+            <GUI.Input
+              label="Camera (x)"
+              value={store.three.camera.positionX}
+              min={-2000}
+              max={2000}
+              step={0.1}
+            ></GUI.Input>
+            <GUI.Input
+              label="Camera (y)"
+              value={store.three.camera.positionY}
+              min={-2000}
+              max={2000}
+              step={0.1}
+            ></GUI.Input>
+            <GUI.Input
+              label="Camera (z)"
+              value={store.three.camera.positionZ}
+              min={-2000}
+              max={2000}
+              step={0.1}
+            ></GUI.Input>
           </GUI.Folder>
         </GUI.Pane>
         <GUI.Pane placement="right" name="World" id="world" icon={<Web />}>
@@ -344,7 +379,7 @@ const Provider = ({ classes, children } = {}) => {
               enabler={store.seeds.locked.sphere}
               disabled={allSeedsLocked}
             ></GUI.Input>
-            <GUI.Input label="N" value={store.world.N} min={4} max={500000}></GUI.Input>
+            <GUI.Input label="N" value={store.world.N} min={4} max={1000000}></GUI.Input>
             <GUI.Input label="Jitter" value={store.world.sphere.jitter} max={1} step={0.01}></GUI.Input>
             <GUI.Input label="Radius" value={store.world.radius} min={1} max={1000.0} step={0.01}></GUI.Input>
             <GUI.Input
@@ -354,7 +389,7 @@ const Provider = ({ classes, children } = {}) => {
             ></GUI.Input>
           </GUI.Folder>
           <GUI.Folder name="Visibility" id="world-visibility">
-            <GUI.Input label="Grid" value={store.world.visible.grid}></GUI.Input>
+            <GUI.Input label="Grid" value={store.three.grid}></GUI.Input>
             <GUI.Input label="Cloud" value={store.world.visible.cloud}></GUI.Input>
             <GUI.Input label="Triangulation" value={store.world.visible.triangles}></GUI.Input>
             <GUI.Input label="Tesselation (Regions)" value={store.world.visible.regions}></GUI.Input>

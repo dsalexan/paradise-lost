@@ -32,7 +32,7 @@ class CameraController extends OrbitControls {
 
     spherical.makeSafe()
 
-    spherical.radius = radius * 3.333
+    spherical.radius = radius * 1.5
 
     // move target to panned location
     // scope.target.add(panOffset)
@@ -44,8 +44,8 @@ class CameraController extends OrbitControls {
 
     position.copy(target).add(offset)
 
-    camera.near = 0.5
-    camera.far = Math.min(radius ** 3, 500)
+    camera.near = 0.1
+    camera.far = 3000
 
     camera.lookAt(target)
     camera.updateProjectionMatrix()

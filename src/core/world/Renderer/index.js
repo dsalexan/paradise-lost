@@ -67,7 +67,8 @@ export default class Renderer {
     this.cloudSiteGeometry.next(geometry)
   }
 
-  buildCloudSiteMesh({ color = 0x99ccff } = {}) {
+  // 0x99ccff
+  buildCloudSiteMesh({ color = 0x000000 } = {}) {
     if (!this.cloudSiteGeometry.value || !this.world.visibility.cloud.value) return (this.cloudSiteMesh = null)
 
     PERFORMANCE() && console.time('World/Renderer/buildCloudSiteMesh') // COMMENT

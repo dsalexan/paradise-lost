@@ -15,6 +15,7 @@ function statValue(string) {
 class Three {
   constructor(observables = {}) {
     this.observables = observables
+    const o_camera = observables.camera
 
     // CANVAS
     this.canvas = document.getElementById('three')
@@ -26,9 +27,9 @@ class Three {
     this.scene.background = new THREE.Color(0x222222)
 
     // CAMERA
-    this.camera = new THREE.PerspectiveCamera(45, width / height, 0.5, 30000)
+    this.camera = new THREE.PerspectiveCamera(450, width / height, 0.1, 3000)
     // camera.position.set(0, 0, 100)
-    this.camera.position.set(0, 100, 0)
+    this.camera.position.set(0, 1000, 0)
     this.camera.lookAt(new THREE.Vector3(0, 0, 0))
 
     this.camera.updateProjectionMatrix()
@@ -52,6 +53,8 @@ class Three {
     this.stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
     this.stats.dom.style.cssText = 'position: fixed; right: 0; bottom: 0; z-index: 500;'
     document.body.appendChild(this.stats.dom)
+
+    this.initted = true
   }
 
   watch(paths = []) {
@@ -71,6 +74,8 @@ class Three {
 
     this.initAxes()
     this.initGrid()
+
+    // this.controls.lookAtWorld(this.grid, this.observables.radius.value)
   }
 
   initAxes() {
@@ -91,7 +96,7 @@ class Three {
       var latSegments = 18 // 10° increments
       var longSegments = 36 // 10° increments
 
-      var geometry = new THREE.SphereBufferGeometry(radius.value * 1.0085, longSegments, latSegments)
+      var geometry = new THREE.SphereBufferGeometry(radius.value * 1.007, longSegments, latSegments)
       var material = new THREE.MeshBasicMaterial({
         color: 0x888888,
         wireframe: true,
@@ -104,7 +109,24 @@ class Three {
   }
 
   subscribe() {
-    const { radius, projection, fog, background, stats } = this.observables
+    const { grid, radius, projection, fog, background, stats } = this.observables
+
+    grid.subscribe((visible) => this.grid && (this.grid.visible = visible))
+
+    // merge(camera.fov, camera.near, camera.far, camera.positionX, camera.positionY, camera.positionZ, center)
+    //   .pipe(debounce(() => interval(10)))
+    //   .subscribe(() => {
+    //     console.log(this.camera)
+
+    //     this.camera.fov = camera.fov.value
+    //     this.camera.near = camera.near.value
+    //     this.camera.far = camera.fov.value
+
+    //     this.camera.position.set(camera.positionX.value, camera.positionY.value, camera.positionZ.value)
+    //     this.camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+    //     this.camera.updateProjectionMatrix()
+    //   })
 
     // merge([fog.color, fog.near, fog.far])
     //   .pipe(debounce(() => interval(50)))

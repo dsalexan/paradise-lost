@@ -1,5 +1,5 @@
 /* global W, ENGINE */
-import { get, last } from 'lodash'
+import { cloneDeep, get, last } from 'lodash'
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import { useStore } from '../../components/Store'
 
@@ -112,8 +112,25 @@ export default () => {
 
     // PROJECTION
     projection.center.subscribe((event) => {
-      alert('center')
-      // TODO: make camera center
+      console.log(
+        cloneDeep([
+          ENGINE.camera.fov,
+          ENGINE.camera.near,
+          ENGINE.camera.far,
+          ENGINE.camera.position,
+          ENGINE.camera.lookAt,
+        ])
+      )
+      ENGINE.controls.lookAtWorld(ENGINE.grid, world.radius.value)
+      console.log(
+        cloneDeep([
+          ENGINE.camera.fov,
+          ENGINE.camera.near,
+          ENGINE.camera.far,
+          ENGINE.camera.position,
+          ENGINE.camera.lookAt,
+        ])
+      )
     })
 
     // WORLD
