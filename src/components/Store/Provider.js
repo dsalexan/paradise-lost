@@ -24,13 +24,20 @@ import Earth from 'mdi-material-ui/Earth'
 
 import useSurfaceArea from '../../domain/earth/surfaceArea'
 import findClosest from '../../lib/lodash/findClosest'
+import useWindow from '../../lib/window'
 
 const Provider = ({ classes, children } = {}) => {
+  const [_update, _setUpdate] = useState(0)
+
   const data = {
     countries: {
       surfaceArea: new BehaviorSubject(null), // useSurfaceArea(), // TODO: findout how to not freeze page when fetching csv
     },
   }
+
+  const update = useCallback(() => {
+    _setUpdate(_update + 1)
+  }, [_update, _setUpdate])
 
   const store = useMemo(() => {
     return {
@@ -171,7 +178,7 @@ const Provider = ({ classes, children } = {}) => {
             <GUI.Input
               label="Plates"
               value={[get(window, 'W.tectonics.plates', new BehaviorSubject([]))]}
-              format={([plates]) => plates.value.length}
+              format={([plates]) => get(plates.value, 'length', 0)}
             ></GUI.Input>
             <GUI.Input label="Generate" value={store.tectonics.generate}></GUI.Input>
 
@@ -415,7 +422,7 @@ const Provider = ({ classes, children } = {}) => {
         </GUI.Pane>
       </GUI.Root>
 
-      <Context.Provider value={store}>{children}</Context.Provider>
+      <Context.Provider value={{ store, update }}>{children}</Context.Provider>
     </>
   )
 }

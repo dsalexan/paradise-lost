@@ -22,7 +22,10 @@ function animate() {
 }
 
 export default () => {
-  const { control, seeds, projection, three, world, tectonics } = useStore()
+  const {
+    store: { control, seeds, projection, three, world, tectonics },
+    update,
+  } = useStore()
 
   // CREATE WORLD AND STORE IN WINDOW
   useEffect(() => {
@@ -41,6 +44,8 @@ export default () => {
       },
     })
     window.W = _W
+
+    update()
 
     merge(_W._tesselation)
       .pipe(debounce(() => interval(50)))
