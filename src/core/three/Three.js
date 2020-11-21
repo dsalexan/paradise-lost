@@ -88,7 +88,7 @@ class Three {
   }
 
   initGrid() {
-    const { projection, radius } = this.observables
+    const { projection, radius, grid } = this.observables
 
     this.scene.remove(this.grid)
 
@@ -105,6 +105,8 @@ class Three {
       var sphere = new THREE.Mesh(geometry, material)
       this.grid = sphere
     }
+
+    this.grid.visible = grid.value
     this.scene.add(this.grid)
   }
 

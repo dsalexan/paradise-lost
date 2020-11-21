@@ -41,7 +41,10 @@ const Provider = ({ classes, children } = {}) => {
         state: new StorableSubject(null, 'state'),
         clear: new Subject(),
         newTab: new Subject(),
-        performance: new StorableSubject(true, 'store/control/performance'),
+        performance: {
+          world: new StorableSubject(true, 'store/control/performance/world'),
+          tectonics: new StorableSubject(true, 'store/control/performance/tectonics'),
+        },
       },
       seeds: {
         regenerate: new Subject(),
@@ -101,11 +104,13 @@ const Provider = ({ classes, children } = {}) => {
         tesselation: {
           center: new StorableSubject('Centroids', 'store/world/tesselation/center'),
         },
+
         visible: {
           cloud: new StorableSubject(true, 'store/world/visible/cloud'),
           triangles: new StorableSubject(true, 'store/world/visible/triangles'),
           centers: new StorableSubject(true, 'store/world/visible/centers'),
           regions: new StorableSubject(true, 'store/world/visible/regions'),
+          color: new StorableSubject('region', 'store/world/visible/color'),
         },
       },
       tectonics: {
@@ -155,12 +160,19 @@ const Provider = ({ classes, children } = {}) => {
             <GUI.Input label={LoadLabel} value={store.control.load} disabled={!state}></GUI.Input>
             <GUI.Input label="Clear Storage" value={store.control.clear}></GUI.Input>
             <GUI.Input label="New Tab" value={store.control.newTab}></GUI.Input>
-            <GUI.Input label="Show Performance" value={store.control.performance}></GUI.Input>
+          </GUI.Folder>
+          <GUI.Folder name="Performance" id="control-performance">
+            <GUI.Input label="World" value={store.control.performance.world}></GUI.Input>
+            <GUI.Input label="Plate Tectonics" value={store.control.performance.tectonics}></GUI.Input>
           </GUI.Folder>
         </GUI.Pane>
         <GUI.Pane name="Tectonics" id="tectonics" icon={<Earth />}>
           <GUI.Folder name="Overview" id="tectonics-overview">
-            {/* <GUI.Input label="Tectonic Plates" value={store.control.name}></GUI.Input> */}
+            <GUI.Input
+              label="Plates"
+              value={[get(window, 'W.tectonics.plates', new BehaviorSubject([]))]}
+              format={([plates]) => plates.value.length}
+            ></GUI.Input>
             <GUI.Input label="Generate" value={store.tectonics.generate}></GUI.Input>
 
             <GUI.Input
@@ -394,6 +406,11 @@ const Provider = ({ classes, children } = {}) => {
             <GUI.Input label="Triangulation" value={store.world.visible.triangles}></GUI.Input>
             <GUI.Input label="Tesselation (Regions)" value={store.world.visible.regions}></GUI.Input>
             <GUI.Input label="Tesselation (Centers)" value={store.world.visible.centers}></GUI.Input>
+            <GUI.Input
+              label="Color Schema"
+              value={store.world.visible.color}
+              options={['region', 'tectonics']}
+            ></GUI.Input>
           </GUI.Folder>
         </GUI.Pane>
       </GUI.Root>

@@ -35,8 +35,20 @@ export default () => {
       seed: seeds.sphere,
       visibility: world.visible,
       projector,
+      tectonics: {
+        seeds: seeds.tectonics,
+        ...tectonics,
+      },
     })
     window.W = _W
+
+    merge(_W._tesselation)
+      .pipe(debounce(() => interval(50)))
+      .subscribe(() => {
+        if (!_W.tesselation || !_W.regions.length || !tectonics.sites.preferRandom.value) return
+
+        _W.tectonics.randomizeSites()
+      })
   }, [])
 
   // SUBSCRIBE TO EVENTS ON COMPONENT MOUNT
@@ -144,31 +156,22 @@ export default () => {
 
     // tectonics
     tectonics.generate.subscribe((event) => {
-      // TODO: implement tectonics plate generation
-      // if (!WORLD.tectonics.enabled) return
+      if (!W.tectonics.enabled) return
 
       seeds.regenerate.next('tectonics.plates')
-      // WORLD.tectonics.generate()
+      W.tectonics.generate()
     })
 
     tectonics.sites.clear.subscribe((event) => {
-      // TODO: implement tectonics sites clear
-      // if (!WORLD.tectonics.enabled) return
-      // WORLD.tectonics.clear()
+      if (!W.tectonics.enabled) return
+      W.tectonics.clear()
     })
 
     tectonics.sites.randomize.subscribe((event) => {
-      // TODO: implement tectonics sites randomizator
-      // if (!WORLD.tectonics.enabled) return
+      if (!W.tectonics.enabled) return
 
       seeds.regenerate.next('tectonics.sites')
-      // WORLD.tectonics.randomizeSites(
-      //   {
-      //     primary: tectonics.sites.primary.value,
-      //     // secondary: tectonics.sites.secondary.value,
-      //   },
-      //   { seed: seeds.tectonics.sites.value }
-      // )
+      W.tectonics.randomizeSites()
     })
   }, [])
 

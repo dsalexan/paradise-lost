@@ -7,13 +7,14 @@ import Sphere from './Sphere'
 
 import { geoVoronoi } from '../../lib/d3-geo-voronoi'
 import { get } from 'lodash'
+import PlateTectonics from './PlateTectonics'
 
 function PERFORMANCE() {
-  return JSON.parse(window.localStorage.getItem('store/control/performance'))
+  return JSON.parse(window.localStorage.getItem('store/control/performance/world'))
 }
 
 class World {
-  constructor(N, radius, { jitter, tesselation = {}, seed, visibility, projector } = {}) {
+  constructor(N, radius, { jitter, tesselation = {}, seed, visibility, projector, tectonics } = {}) {
     // BASE SPHERE
     this.N = N
     this.radius = radius
@@ -29,6 +30,11 @@ class World {
     this._spherical = new BehaviorSubject(null)
     this._cartesian = new BehaviorSubject(null)
     this._tesselation = new BehaviorSubject(null)
+
+    this.regions = null
+
+    // PLATE TECTONICS
+    this.tectonics = new PlateTectonics(this, tectonics, projector)
 
     // render
     this.colors = new BehaviorSubject({
@@ -77,6 +83,8 @@ class World {
     ])
     this._tesselation.next(geoVoronoi()(sphericalVerticesInDegree, { center: this.centerMethod.value }))
     PERFORMANCE() && console.timeEnd('World/buildTesselation') // COMMENT
+
+    this.regions = this.tesselation.polygons().features
   }
 
   build(force = false) {
@@ -86,36 +94,24 @@ class World {
 
   render(engine) {
     this.renderer.render(engine)
+    this.tectonics.render(engine)
   }
 
   save() {
     const toRAD = Math.PI / 180
 
-    const sphericalVerticesInDegree = this.voronoi.diagram.value
-      .polygons()
-      .features.map((feature) => feature.properties.site)
-
-    const spherical = sphericalVerticesInDegree.map(([θ, ϕ]) => ({
-      ϕ: (ϕ + 90) * toRAD,
-      θ: θ * toRAD,
-    }))
-    const cartesian = spherical.map(({ ϕ, θ }) => ({
-      x: Math.cos(θ) * Math.sin(ϕ),
-      y: Math.sin(θ) * Math.sin(ϕ),
-      z: Math.cos(ϕ),
-    }))
-
     return {
       N: this.N.value,
       radius: this.radius.value,
       jitter: this.jitter.value,
+      centerMethod: this.centerMethod.value,
 
       vertices: {
-        spherical,
-        cartesian,
+        spherical: this.spherical,
+        cartesian: this.cartesian,
       },
 
-      // tectonics: this.tectonics.save(), // TODO: save tectonics
+      tectonics: this.tectonics.save(), // TODO: save tectonics
     }
   }
 
@@ -125,12 +121,14 @@ class World {
     this.N.next(get(data, 'N', this.N.value))
     this.radius.next(get(data, 'radius', this.radius.value))
     this.jitter.next(get(data, 'jitter', this.jitter.value))
+    this.centerMethod.next(get(data, 'centerMethod', this.centerMethod.value))
 
-    this.vertices.next(get(data, 'vertices', null))
+    this._spherical.next(get(data, 'vertices.spherical', null))
+    this._cartesian.next(get(data, 'vertices.cartesian', null))
 
     this.buildVoronoi(true)
 
-    // this.tectonics.load(get(data, 'tectonics')) // TODO: load tectonics
+    this.tectonics.load(get(data, 'tectonics')) // TODO: load tectonics
 
     setTimeout(() => {
       this.enabled = true

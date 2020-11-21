@@ -11,8 +11,8 @@ import { ConvexBufferGeometry } from '../../three/geometries/ConvexBufferGeometr
 import chroma from 'chroma-js'
 import { geoVoronoi } from '../../../lib/d3-geo-voronoi'
 
-function PERFORMANCE(override = true) {
-  return override && JSON.parse(window.localStorage.getItem('store/control/performance'))
+function PERFORMANCE() {
+  return JSON.parse(window.localStorage.getItem('store/control/performance/world'))
 }
 
 // chroma(i % 360, 0.4, 0.7, 'hsl').hex()
@@ -113,7 +113,7 @@ export default class Renderer {
     this.tesselatedCloudCentersGeometry.next(geometry)
   }
 
-  buildTesselatedCloudCentersMesh({ color = 0xff0000 } = {}) {
+  buildTesselatedCloudCentersMesh({ color = 0x99ccff } = {}) {
     if (!this.tesselatedCloudCentersGeometry.value || !this.world.visibility.centers.value)
       return (this.tesselatedCloudCentersMesh = null)
 
@@ -138,6 +138,8 @@ export default class Renderer {
 
     const SITES = tesselation.valid
     const POLYGONS = tesselation.delaunay.polygons
+    const colorScheme = get(this.world.colors.value, this.world.visibility.color.value, null) || color
+    console.log('color scheme', this.world.colors.value, this.world.visibility.color.value)
 
     PERFORMANCE() && console.time('World/Renderer/buildTesselatedSphereGeometry') // COMMENT
 
@@ -218,7 +220,7 @@ export default class Renderer {
         vertices[vertices_index++] = cartesian[i].y * radius
         vertices[vertices_index++] = cartesian[i].z * radius
 
-        const c = color(r)
+        const c = colorScheme(r)
         colors[colors_index++] = c[0]
         colors[colors_index++] = c[1]
         colors[colors_index++] = c[2]
@@ -351,10 +353,17 @@ export default class Renderer {
       .pipe(debounce(() => interval(50)))
       .subscribe(() => {
         const tesselation = this.world._tesselation.value
-        const radius = this.world.radius.value
 
         if (!tesselation) return
         if (!(!this.world.visibility.centers.value && o.removeOnHide.value)) this.buildTesselatedCloudCentersGeometry()
+      })
+
+    merge(this.world.radius, this.world._tesselation, this.world.visibility.color, this.world.colors)
+      .pipe(debounce(() => interval(50)))
+      .subscribe(() => {
+        const tesselation = this.world._tesselation.value
+
+        if (!tesselation) return
         if (!(!this.world.visibility.regions.value && o.removeOnHide.value)) this.buildTesselatedSphereGeometry()
       })
   }

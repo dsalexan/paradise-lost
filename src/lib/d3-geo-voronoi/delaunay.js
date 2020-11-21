@@ -25,7 +25,7 @@ const worker = new Worker('./worker', { name: 'worker', type: 'module' })
 const delaunayWorker = Comlink.wrap(worker)
 
 function PERFORMANCE() {
-  return false && JSON.parse(window.localStorage.getItem('store/control/performance'))
+  return true && JSON.parse(window.localStorage.getItem('store/control/performance/world'))
 }
 
 // Converts 3D Cartesian to spherical coordinates (degrees).
@@ -58,7 +58,7 @@ export function geoDelaunay(points, { center } = {}) {
   const edges = null //geo_edges(triangles, points)
   PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_edges') // COMMENT
   PERFORMANCE() && console.time('     geoDelaunay/geo_neighbors') // COMMENT
-  const neighbors = null // geo_neighbors(triangles, points.length)
+  const neighbors = geo_neighbors(triangles, points.length)
   PERFORMANCE() && console.timeEnd('     geoDelaunay/geo_neighbors') // COMMENT
   PERFORMANCE() && console.time('     geoDelaunay/geo_find') // COMMENT
   const find = null // geo_find(neighbors, points)
