@@ -68,7 +68,12 @@ class PlateTectonics {
 
     let availableRegions = range(0, this.world.regions.length)
 
-    const _primary = sample(availableRegions, this.sites.total.primary.value, { seed: this.seeds.sites.value })
+    if (this.world.regions.length < this.sites.total.primary.value) return
+    if (this.sites.total.primary.value <= 0) return
+
+    const _primary = sample(availableRegions, this.sites.total.primary.value, {
+      seed: this.seeds.sites.value,
+    })
     availableRegions = _primary.remaining
 
     this.sites.primary.next(_primary.result)

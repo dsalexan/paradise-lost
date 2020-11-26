@@ -19,20 +19,14 @@ class Three {
 
     // CANVAS
     this.canvas = document.getElementById('three')
+    this.width = window.innerWidth
+    this.height = window.innerHeight
     const width = window.innerWidth
     const height = window.innerHeight
 
     // SCENE
     this.scene = new THREE.Scene()
     this.scene.background = new THREE.Color(0x222222)
-
-    // CAMERA
-    this.camera = new THREE.PerspectiveCamera(450, width / height, 0.1, 3000)
-    // camera.position.set(0, 0, 100)
-    this.camera.position.set(0, 1000, 0)
-    this.camera.lookAt(new THREE.Vector3(0, 0, 0))
-
-    this.camera.updateProjectionMatrix()
 
     // RENDERER
     this.renderer = new THREE.WebGLRenderer({
@@ -42,8 +36,12 @@ class Three {
     })
     this.renderer.setSize(width, height)
 
-    // CAMERA CONTROLS
-    this.controls = new CameraController(this.camera, this.renderer.domElement)
+    console.log('OES_texture_float', this.renderer.context.getExtension('OES_texture_float'))
+    console.log('OES_texture_float_linear', this.renderer.context.getExtension('OES_texture_float_linear'))
+
+    // CAMERA
+    if (observables.projection.value === 'Orthographic') this.initOrthographicCamera()
+    else if (observables.projection.value === 'Equirectangular') this.initEquirectangularCamera()
 
     // CLOCK
     this.clock = new THREE.Clock()
@@ -93,27 +91,81 @@ class Three {
     this.scene.remove(this.grid)
 
     if (projection.value === 'Orthographic') {
-      var latSegments = 18 // 10° increments
-      var longSegments = 36 // 10° increments
+      let latSegments = 18 // 10° increments
+      let longSegments = 36 // 10° increments
 
-      var geometry = new THREE.SphereBufferGeometry(radius.value * 1.007, longSegments, latSegments)
-      var material = new THREE.MeshBasicMaterial({
+      let geometry = new THREE.SphereBufferGeometry(radius.value * 1.007, longSegments, latSegments)
+      let material = new THREE.MeshBasicMaterial({
         color: 0x888888,
         wireframe: true,
       })
 
-      var sphere = new THREE.Mesh(geometry, material)
+      let sphere = new THREE.Mesh(geometry, material)
       this.grid = sphere
+    } else if (projection.value === 'Equirectangular') {
+      const size = radius.value * Math.PI * 2
+
+      var plane = new THREE.Mesh(
+        new THREE.PlaneGeometry(size, size / 2, 36, 18),
+        new THREE.MeshBasicMaterial({
+          color: 0x888888,
+          wireframe: true,
+        })
+      )
+      plane.rotation.x = Math.PI / 2
+      plane.position.y = 1
+
+      this.grid = plane
     }
 
-    this.grid.visible = grid.value
-    this.scene.add(this.grid)
+    if (this.grid) {
+      this.grid.visible = grid.value
+      this.scene.add(this.grid)
+    }
+  }
+
+  initOrthographicCamera() {
+    this.camera = new THREE.PerspectiveCamera(450, this.width / this.height, 0.1, 3000)
+    // camera.position.set(0, 0, 100)
+    this.camera.position.set(0, 1000, 0)
+    this.camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+    this.camera.updateProjectionMatrix()
+
+    // CAMERA CONTROLS
+    this.controls = new CameraController(this.camera, this.renderer.domElement)
+  }
+
+  initEquirectangularCamera() {
+    const viewSize = this.observables.radius.value * Math.PI + 600
+
+    const aspectRatio = this.width / this.height
+    this.camera = new THREE.OrthographicCamera(
+      (-aspectRatio * viewSize) / 2,
+      (aspectRatio * viewSize) / 2,
+      viewSize / 2,
+      -viewSize / 2,
+      -1000,
+      1000
+    )
+    this.camera.position.set(0, 100, 0)
+    this.camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+    this.camera.updateProjectionMatrix()
+
+    // CAMERA CONTROLS
+    this.controls = new CameraController(this.camera, this.renderer.domElement)
   }
 
   subscribe() {
     const { grid, radius, projection, fog, background, stats } = this.observables
 
     grid.subscribe((visible) => this.grid && (this.grid.visible = visible))
+
+    projection.subscribe((projection) => {
+      if (projection === 'Orthographic') this.initOrthographicCamera()
+      else this.initEquirectangularCamera()
+    })
 
     // merge(camera.fov, camera.near, camera.far, camera.positionX, camera.positionY, camera.positionZ, center)
     //   .pipe(debounce(() => interval(10)))

@@ -29,17 +29,17 @@ export default class Renderer {
 
   buildCloudSiteGeometry() {
     const sites = [...this.tectonics.sites.primary.value, ...this.tectonics.sites.secondary.value]
-    const radius = this.world.radius.value * 1.007
+    const radius = this.world.radius.value * this.projector.radius
 
     if (!sites.length) return this.cloudSiteGeometry.next(null)
 
     PERFORMANCE() && console.time('World/Renderer/buildCloudSiteGeometry') // COMMENT
-    const vertices = at(this.world.cartesian, sites)
+    const vertices = at(this.world.spherical, sites)
 
     const buffer = []
     for (let i = 0; i < vertices.length; i++) {
-      const p = vertices[i]
-      buffer.push(p.x * radius, p.y * radius, p.z * radius)
+      const p = this.projector.project(vertices[i])
+      buffer.push(p.x * radius, p.y * radius, p.z * radius + 1)
     }
 
     var geometry = new THREE.BufferGeometry()
@@ -58,7 +58,7 @@ export default class Renderer {
     if (!this.cloudSiteGeometry.value || !this.tectonics.visibility.cloud.value) return (this.cloudSiteMesh = null)
 
     PERFORMANCE() && console.time('World/Renderer/buildCloudSiteMesh') // COMMENT
-    const size = this.projector.gizmoSize.value
+    const size = this.projector.gizmoSize.value * this.projector.relativeSize
 
     const cloud = new THREE.Points(
       this.cloudSiteGeometry.value,
@@ -102,7 +102,7 @@ export default class Renderer {
       const mesh = this.cloudSiteMesh
       if (mesh) {
         mesh.visible = visible
-        engine.scene.add(this.cloudSiteMesh)
+        // engine.scene.add(this.cloudSiteMesh)
       }
     })
   }
@@ -110,7 +110,7 @@ export default class Renderer {
   subscribe(engine) {
     const o = engine.observables
 
-    merge(this.tectonics.sites.primary, this.tectonics.sites.secondary, this.projector.gizmoSize)
+    merge(this.tectonics.sites.primary, this.tectonics.sites.secondary, this.projector.gizmoSize, this.projector.type)
       .pipe(debounce(() => interval(50)))
       .subscribe(() => {
         if (!this.tectonics.visibility.cloud.value && o.removeOnHide.value) return
