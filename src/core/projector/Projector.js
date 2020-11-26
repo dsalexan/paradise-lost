@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import { geoEquirectangular, geoOrthographic } from 'd3'
 import { isArray } from 'lodash'
 
+const DEGREE = 180 / Math.PI
 export default class Projector {
   constructor({ type, gizmoSize, radius } = {}) {
     this.type = type
@@ -44,10 +45,14 @@ export default class Projector {
     }
   }
 
-  translateToTexture(spherical) {
+  translateToTexture(spherical, res) {
+    const inDegree = {
+      θ: spherical.θ * DEGREE,
+      ϕ: spherical.ϕ * DEGREE,
+    }
     return {
-      x: (spherical.θ + Math.PI) % (Math.PI * 2),
-      y: (spherical.ϕ + Math.PI / 2) % Math.PI,
+      x: Math.floor(((inDegree.θ + 180) % 360) * (res / 100)),
+      y: Math.floor(((inDegree.ϕ + 90) % 180) * (res / 100)),
     }
   }
 
@@ -63,8 +68,9 @@ export default class Projector {
     // position.x === ϕ
     // position.y === θ
     if (this.type.value === 'Orthographic') {
+      // ([-180, 180], [-90, 90])
       return `
-        vec3 spherialInRadians = spherical * RAD + vec3(PI, PI / 2., 0.);
+        vec3 spherialInRadians = spherical * RAD + vec3(0, PI / 2., 0.);
 
         projectedPosition = vec3(
           cos(spherialInRadians.x) * sin(spherialInRadians.y),

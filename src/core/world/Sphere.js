@@ -43,7 +43,7 @@ export function fibonacci(N, jitter, seed) {
     let z = Math.cos(ϕ)
 
     cartesian.push({ x, y, z })
-    spherical.push({ ϕ: ϕ % (Math.PI * 2), θ: θ % (Math.PI * 2), r: 1 })
+    spherical.push({ ϕ: ϕ - Math.PI / 2, θ: (θ % (Math.PI * 2)) - Math.PI, r: 1 })
   }
 
   // const cartesian = worker.calcCartesian({ spherical })

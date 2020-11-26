@@ -11,7 +11,7 @@ import { ConvexBufferGeometry } from '../../three/geometries/ConvexBufferGeometr
 import chroma from 'chroma-js'
 import { geoVoronoi } from '../../../lib/d3-geo-voronoi'
 import { geoEquirectangular } from 'd3'
-import { isInsidePolygon } from '../../../lib/bevinChatelain'
+import { isInsidePolygon } from '../../../lib/bevinChatelain_RAD'
 
 function PERFORMANCE() {
   return JSON.parse(window.localStorage.getItem('store/control/performance/world'))
@@ -26,7 +26,7 @@ function PERFORMANCE() {
 let _randomColor = []
 function color(index) {
   if (!_randomColor[index]) {
-    _randomColor[index] = [0.5 + Math.random() * 0.5, 0.6 + Math.random() * 0.3, 0.5 + Math.random() * 0.5]
+    _randomColor[index] = [0.5 + Math.random() * 0.5, 0.6 + Math.random() * 0.3, 0.5 + Math.random() * 0.5, 1]
   }
   return _randomColor[index]
 }
@@ -125,18 +125,13 @@ export default class Renderer {
     PERFORMANCE() && console.time('World/Renderer/buildTesselatedCloudCentersGeometry') // COMMENT
     const size = 3 * tesselation.delaunay.centers.length
     const centers = new Float32Array(size)
-    let index = 0
+
     for (let i = 0; i < tesselation.delaunay.centers.length; i++) {
-      const center = tesselation.delaunay.centers[i]
+      const [θ, ϕ] = tesselation.delaunay.centers[i]
 
-      const { ϕ, θ } = {
-        ϕ: ((center[1] + 90) * Math.PI) / 180,
-        θ: (center[0] * Math.PI) / 180,
-      }
-
-      centers[index++] = ϕ
-      centers[index++] = θ + (this.projector.type.value === 'Equirectangular' ? Math.PI : 0)
-      centers[index++] = 0
+      centers[i * 3] = θ //(this.projector.type.value === 'Equirectangular' ? Math.PI : 0)
+      centers[i * 3 + 1] = ϕ
+      centers[i * 3 + 2] = 0
     }
 
     var geometry = new THREE.BufferGeometry()
@@ -168,6 +163,7 @@ export default class Renderer {
         },
         vertexShader: `
           #define PI 3.1415926535897932384626433832795
+          #define RAD PI / 180.
 
           uniform float radius;
           uniform float size;
@@ -204,181 +200,79 @@ export default class Renderer {
     const radius = this.world.radius.value
     if (!tesselation) return
 
-    const SITES = tesselation.valid
-    const POLYGONS = tesselation.delaunay.polygons
     const colorScheme = get(this.world.colors.value, this.world.visibility.color.value, null) || color
-
-    PERFORMANCE() && console.time('World/Renderer/buildTesselatedSphereGeometry') // COMMENT
-
-    let A1 = 0,
-      A2 = 0,
-      A3 = 0,
-      A4 = 0,
-      A5 = 0,
-      A6 = 0,
-      A7 = 0,
-      A8 = 0
-
-    // console.time('    buildTesselatedSphereGeometry/calculate ArraySize') // COMMENT MANUAL
-    const size = 3 * 3 * sum(flatten(POLYGONS.map((p) => p.length)))
-    let vertices = new Float32Array(size),
-      colors = new Float32Array(size),
-      vs = [],
-      cs = []
-    // console.timeEnd('    buildTesselatedSphereGeometry/calculate ArraySize') // COMMENT MANUAL
-
-    let vertices_index = 0,
-      colors_index = 0
-
-    POLYGONS.map((ts, r) => {
-      // const a2 = performance.now() // COMMENT MANUAL
-      // let sphericalInDegree_OG = ts.map((index) => this.world.tesselation.delaunay.centers[index])
-      // sphericalInDegree_OG = [...sortBy(sphericalInDegree_OG, (_, i) => -i), last(sphericalInDegree_OG)]
-
-      const sphericalInDegree = []
-      for (let i = ts.length - 1; i >= 0; i--) {
-        sphericalInDegree.push(centers[ts[i]])
-      }
-      sphericalInDegree.push(sphericalInDegree[0])
-      // A2 += performance.now() - a2 // COMMENT MANUAL
-
-      // const a3 = performance.now() // COMMENT MANUAL
-      // const trianglesSphericalInDegree = flatten(
-      //   zip(sphericalInDegree.slice(0, -1), sphericalInDegree.slice(1)).map(([a, b]) => [SITES[r], b, a])
-      // )
-      // TODO: remake delaunay shit to not need this degree shit
-
-      const spherical = []
-      for (let i = 0; i < sphericalInDegree.length - 1; i++) {
-        const site = this.projector.project(SITES[r])
-        const i0 = this.projector.project(sphericalInDegree[i])
-        const i1 = this.projector.project(sphericalInDegree[i + 1])
-
-        if (this.projector.type.value === 'Equirectangular') {
-          i0.θ += Math.PI
-          i1.θ += Math.PI
-        }
-
-        spherical.push(...[site, i1, i0])
-      }
-      // A3 += performance.now() - a3 // COMMENT MANUAL
-
-      // const a1 = performance.now() // COMMENT MANUAL
-      // vs.push(...flatten(cartesian.map(({ x, y, z }) => [x, y, z])))
-      // cs.push(...flatten(cartesian.map(() => color([r, SITES.length]))))
-
-      for (let i = 0; i < spherical.length; i++) {
-        vertices[vertices_index++] = spherical[i].ϕ
-        vertices[vertices_index++] = spherical[i].θ
-        vertices[vertices_index++] = 0
-
-        const c = colorScheme(r)
-        colors[colors_index++] = c[0]
-        colors[colors_index++] = c[1]
-        colors[colors_index++] = c[2]
-      }
-      // A1 += performance.now() - a1 // COMMENT MANUAL
-    })
-
-    // console.log('    buildTesselatedSphereGeometry/indexes in polygon -> centers', A2) // COMMENT MANUAL
-    // console.log('    buildTesselatedSphereGeometry/zip mess to get duples', A3) // COMMENT MANUAL
-    // console.log('    buildTesselatedSphereGeometry/push to flat array', A1) // COMMENT MANUAL
-
-    // vertices = new Float32Array(vs)
-    // colors = new Float32Array(cs)
-
-    const geometry = new THREE.BufferGeometry()
-    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-    // geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3))
-
-    PERFORMANCE() && console.timeEnd('World/Renderer/buildTesselatedSphereGeometry') // COMMENT
-    // geometry.computeVertexNormals()
-
-    // this.tesselatedSphereGeometry.next(geometry)
 
     const res = 100
     const width = Math.ceil(3.6 * res)
-    const height = Math.ceil(1.8 * res)
+    const height = Math.ceil(1.8 * res) + 1
 
-    const pixelData = []
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        pixelData.push([0, 0, 0, 255 * 0.1])
-        // pixelData.push([0, 0, 0, 255 * 0.25])
-      }
-    }
-
-    for (let r = 0; r < this.world.tesselation.valid.length; r++) {
-      const site = this.world.tesselation.valid[r]
+    const pixelData = new Uint8Array(width * height * 4)
+    const paint = (i, c) => {
+      pixelData[i * 4] = c[0]
+      pixelData[i * 4 + 1] = c[1]
+      pixelData[i * 4 + 2] = c[2]
+      pixelData[i * 4 + 3] = c[3]
     }
 
     let sphericalPolygons = []
     for (let r = 0; r < this.world.tesselation.delaunay.polygons.length; r++) {
-      const spherical = this.world.tesselation.delaunay.polygons[r].map(
-        (ci) => this.world.tesselation.delaunay.centers[ci]
-      )
+      const spherical = this.world.tesselation.delaunay.polygons[r].map((ci) => {
+        const c = this.world.tesselation.delaunay.centers[ci]
+        const [θ, ϕ] = [c[0] * (Math.PI / 180), c[1] * (Math.PI / 180)]
+
+        const { x, y } = this.projector.translateToTexture({ θ, ϕ }, res)
+
+        paint(y * width + x, [255, 255, 255, 255 * 0.3])
+
+        return [θ, ϕ]
+      })
+
+      let site = this.world.spherical[r]
 
       sphericalPolygons.push({
-        site: this.world.tesselation.valid[r],
+        site: this.world.spherical[r],
         points: spherical,
       })
+
+      const { x, y } = this.projector.translateToTexture(site, res)
+
+      paint(y * width + x, [255, 255, 255, 255])
     }
+    console.log(pixelData)
 
-    const toCoordinates = ({ θ, ϕ }) => {
-      const toDEGREE = 180 / Math.PI
-
-      return {
-        ϕ: (θ - Math.PI) * toDEGREE,
-        λ: (ϕ - Math.PI / 2) * toDEGREE,
-      }
-    }
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        // if (!(y === 14 && x === 0)) continue
-        // if (y < 14) continue
-
+    const incc = (100 / res) * (Math.PI / 180)
+    for (let y = 0, lat = -Math.PI / 2; y < height; y++, lat += incc) {
+      for (let x = 0, lon = -Math.PI; x < width; x++, lon += incc) {
         const index = y * width + x
-        const toRAD = (100 / res) * (Math.PI / 180)
-        const spherical = this.projector.translateFromTexture({ x: x * toRAD, y: y * toRAD })
 
-        // if (x === 17 || x === 18) console.log({ x, y }, spherical, margin(Math.PI * 2, res / 100)(spherical.θ))
-        // if (spherical.ϕ >= Math.PI / 4 + Math.PI / 2) {
-        //   console.log({ x, y })
-        //   pixelData[index] = [255, 0, 0, 255]
-        // }
-        // else pixelData.push([0, 0, 0, 255 * 0.1])
+        if (pixelData[index * 4] === 0) {
+          // paint(y * width + x, [0, 0, 0, 255 * 0.25])
 
-        // continue
-        let inside = false
-        for (let r = 0; r < sphericalPolygons.length && !inside; r++) {
-          const site = sphericalPolygons[r].site
-          const polygon = sphericalPolygons[r].points.map(([θ, ϕ]) => ({ λ: ϕ, ϕ: θ }))
+          let inside = false
+          for (let r = 0; r < sphericalPolygons.length && !inside; r++) {
+            const site = sphericalPolygons[r].site
+            const polygon = sphericalPolygons[r].points.map(([θ, ϕ]) => ({
+              λ: ϕ,
+              ϕ: θ,
+            }))
 
-          inside = isInsidePolygon(polygon, { ϕ: site[0], λ: site[1] }, toCoordinates(spherical))
+            inside = isInsidePolygon(polygon, { ϕ: site.θ, λ: site.ϕ }, { ϕ: lon, λ: lat })
 
-          if (inside === 1 || inside === 2) {
-            const c = colorScheme(r)
-            pixelData[index] = [c[0] * 255, c[1] * 255, c[2] * 255, 255]
+            if (inside === 1 || inside === 2) {
+              const color = colorScheme(r)
+
+              paint(
+                y * width + x,
+                color.map((c) => c * 255)
+              )
+            }
           }
         }
       }
     }
 
-    // for (let i = 0; i < width * height; i++) {
-    //   if (pixelData[i * 4] === undefined) {
-    //     // pixelData.push(parseInt(x / width) * 255, parseInt(y / height) * 255, 0, 255)
-    //     // pixelData.push(Math.random() * 255, Math.random() * 255, Math.random() * 255, Math.random() * 255) // generates random r,g,b,a values from 0 to 1
-    //     pixelData[i * 4] = 255
-    //     pixelData[i * 4 + 1] = 0
-    //     pixelData[i * 4 + 2] = 0
-    //     pixelData[i * 4 + 3] = 255 * 0.005
-    //   }
-    // }
-
-    console.log(pixelData)
     const dataTexture = new THREE.DataTexture(
-      Uint8Array.from(flatten(pixelData)),
+      pixelData,
       width,
       height,
       THREE.RGBAFormat,
@@ -415,8 +309,6 @@ export default class Renderer {
       transparent: true,
       uniforms: {
         radius: { type: 'f', value: this.world.radius.value || 1.0 },
-        resolution: { value: new THREE.Vector2(window.ENGINE.width, window.ENGINE.height) },
-        fov: { type: 'f', value: 450 },
         utexture: { value: dataTexture },
       },
       vertexShader: `
@@ -441,29 +333,12 @@ export default class Renderer {
       #define PI 3.1415926535897932384626433832795
       #define PI_2 PI*2.
       #define MODE 0 // 0 = fibonacci sample, 1 = tesselation lat/lon
-      #define DEGREE vec2(180. / PI, 180. / PI)
 
       varying vec4 vWorld;
       varying vec2 vUV;
       
       uniform float radius;
-      uniform vec2 resolution;
-      uniform float fov;
       uniform sampler2D utexture;
-
-      vec3 worldToSpherical(vec3 cartesian, float r) {
-        vec3 base = vec3(
-          asin(cartesian.y / r),
-          atan(cartesian.z, cartesian.x),
-          r
-        );
-
-        if (MODE == 0) { // fibonacci sample
-          return base + vec3(PI/2., PI, 0.);
-        } else { // tesselation lat/lon
-          return base + vec3(0., PI, 0.);
-        }
-      }
 
       vec2 screenToSpherical(vec2 screen) {
         // convert from ([0, 1], [0, 1]) ->
@@ -480,20 +355,6 @@ export default class Renderer {
       void main()	{
         // EQUIRECTANGULAR
         vec2 spherical = screenToSpherical(vUV);
-
-        // vec4 n_world = vWorld / radius;
-        // vec3 spherical = worldToSpherical(n_world.xyz, 1.); // phi, theta IN RADIANS
-        // vec2 coords = spherical.xy * (180. / PI);
-        // vec2 coords = vec2(vWorld.y, vWorld.x) + vec2(180., 90.);
-
-        // fragColor = texture(iChannel0, rotatedSphericalCoord / vec2(2.*M_PI, M_PI), 0.0);
-        // gl_FragColor = vec4( (vUv.x / radius) + 0.5, (vUv.y / radius) + 0.5, (vUv.z / radius) + 0.5, 1.0 );
-
-        if (spherical.x > 3. *PI / 2.) {
-          gl_FragColor = vec4(1., 0., 0., 1.);
-        } else {
-          gl_FragColor = vec4(0., 0., 0., 0.);
-        }
 
         // gl_FragColor = vec4(spherical.y / PI_2, 0., 0., 1.);
         gl_FragColor = texture(utexture, vUV);

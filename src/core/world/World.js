@@ -77,10 +77,7 @@ class World {
     if (!this.enabled && !force) return
 
     PERFORMANCE() && console.time('World/buildTesselation') // COMMENT
-    const sphericalVerticesInDegree = this.spherical.map(({ r, ϕ, θ }) => [
-      (θ * 180) / Math.PI,
-      ϕ * (180 / Math.PI) - 90,
-    ])
+    const sphericalVerticesInDegree = this.spherical.map(({ r, ϕ, θ }) => [θ * (180 / Math.PI), ϕ * (180 / Math.PI)])
     this._tesselation.next(geoVoronoi()(sphericalVerticesInDegree, { center: this.centerMethod.value }))
     PERFORMANCE() && console.timeEnd('World/buildTesselation') // COMMENT
 
